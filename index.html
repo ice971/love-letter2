@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>写一封情书给你</title>
+<style>
+/* ===== Design System ===== */
+:root {
+  /* Colors - Romantic Palette */
+  --rose: 350 85% 65%;
+  --rose-light: 350 85% 72%;
+  --rose-dark: 350 60% 48%;
+  --rose-glow: 350 85% 75%;
+  --peach: 15 90% 75%;
+  --peach-light: 15 90% 88%;
+  --cream: 30 50% 97%;
+  --warm-white: 30 40% 99%;
+  --gold: 40 60% 55%;
+  --text-primary: 345 40% 22%;
+  --text-secondary: 345 20% 40%;
+  --text-muted: 345 15% 55%;
+  --border-soft: 350 40% 88%;
+  --card-bg: 0 0% 100%;
+  --card-shadow: 0 8px 40px hsl(350 60% 60% / 0.12);
+  --card-shadow-lg: 0 20px 60px hsl(350 60% 60% / 0.18);
+  --button-shadow: 0 6px 24px hsl(350 85% 65% / 0.35);
+  --button-shadow-hover: 0 10px 32px hsl(350 85% 65% / 0.5);
+
+  /* Gradients */
+  --gradient-bg: linear-gradient(170deg, hsl(350 70% 97%) 0%, hsl(15 80% 95%) 40%, hsl(30 50% 97%) 100%);
+  --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(30 40% 99%) 100%);
+  --gradient-button: linear-gradient(135deg, hsl(350 85% 65%) 0%, hsl(350 75% 58%) 100%);
+  --gradient-heart: linear-gradient(135deg, hsl(350 85% 65%) 0%, hsl(0 70% 55%) 100%);
+
+  /* Spacing */
+  --space-xs: 8px;
+  --space-sm: 16px;
+  --space-md: 24px;
+  --space-lg: 32px;
+  --space-xl: 48px;
+  --space-2xl: 64px;
+
+  /* Typography */
+  --font-display: 'Georgia', 'Noto Serif SC', 'STSong', serif;
+  --font-body: 'Georgia', 'Noto Serif SC', 'STSong', serif;
+
+  /* Animation */
+  --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ===== Reset & Base ===== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--gradient-bg);
+  color: hsl(var(--text-primary));
+  min-height: 100vh;
+  min-height: 100dvh;
+  line-height: 1.7;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ===== Floating Hearts Background ===== */
+.hearts-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.heart-float {
+  position: absolute;
+  bottom: -40px;
+  font-size: 20px;
+  animation: floatUp linear infinite;
+  opacity: 0.35;
+  filter: blur(0.5px);
+}
+
+@keyframes floatUp {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(0.7);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.35;
+  }
+  90% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateY(-110vh) rotate(360deg) scale(1.3);
+    opacity: 0;
+  }
+}
+
+/* Generate floating hearts with different durations and positions */
+.heart-float:nth-child(1)  { left: 5%;  animation-duration: 12s; animation-delay: 0s; font-size: 16px; }
+.heart-float:nth-child(2)  { left: 15%; animation-duration: 15s; animation-delay: 2s; font-size: 22px; }
+.heart-float:nth-child(3)  { left: 25%; animation-duration: 10s; animation-delay: 4s; font-size: 18px; }
+.heart-float:nth-child(4)  { left: 35%; animation-duration: 14s; animation-delay: 1s; font-size: 24px; }
+.heart-float:nth-child(5)  { left: 45%; animation-duration: 11s; animation-delay: 5s; font-size: 16px; }
+.heart-float:nth-child(6)  { left: 55%; animation-duration: 16s; animation-delay: 3s; font-size: 20px; }
+.heart-float:nth-child(7)  { left: 65%; animation-duration: 13s; animation-delay: 7s; font-size: 18px; }
+.heart-float:nth-child(8)  { left: 75%; animation-duration: 9s;  animation-delay: 2s; font-size: 22px; }
+.heart-float:nth-child(9)  { left: 85%; animation-duration: 17s; animation-delay: 6s; font-size: 16px; }
+.heart-float:nth-child(10) { left: 92%; animation-duration: 12s; animation-delay: 4s; font-size: 20px; }
+.heart-float:nth-child(11) { left: 10%; animation-duration: 14s; animation-delay: 8s; font-size: 14px; }
+.heart-float:nth-child(12) { left: 40%; animation-duration: 11s; animation-delay: 9s; font-size: 18px; }
+.heart-float:nth-child(13) { left: 60%; animation-duration: 15s; animation-delay: 5s; font-size: 20px; }
+.heart-float:nth-child(14) { left: 78%; animation-duration: 10s; animation-delay: 3s; font-size: 16px; }
+.heart-float:nth-child(15) { left: 50%; animation-duration: 13s; animation-delay: 1s; font-size: 22px; }
+
+/* ===== Main Container ===== */
+.app-container {
+  position: relative;
+  z-index: 1;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: var(--space-xl) var(--space-sm);
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* ===== Scene: both form and view ===== */
+.scene {
+  display: none;
+  animation: fadeSlideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.scene.active {
+  display: block;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== Card ===== */
+.card {
+  background: var(--gradient-card);
+  border-radius: 24px;
+  padding: var(--space-lg);
+  box-shadow: var(--card-shadow);
+  border: 1px solid hsl(var(--border-soft));
+}
+
+.card-lg {
+  padding: var(--space-xl) var(--space-lg);
+  box-shadow: var(--card-shadow-lg);
+}
+
+/* ===== Form Styles ===== */
+.form-header {
+  text-align: center;
+  margin-bottom: var(--space-lg);
+}
+
+.envelope-icon {
+  font-size: 56px;
+  display: block;
+  margin-bottom: var(--space-sm);
+  animation: gentleBounce 2s ease-in-out infinite;
+}
+
+@keyframes gentleBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.form-title {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  background: var(--gradient-heart);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: var(--space-xs);
+  letter-spacing: 0.02em;
+}
+
+.form-subtitle {
+  font-size: 0.95rem;
+  color: hsl(var(--text-muted));
+  font-weight: 400;
+}
+
+.form-group {
+  margin-bottom: var(--space-md);
+}
+
+.form-label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: hsl(var(--text-secondary));
+  margin-bottom: var(--space-xs);
+  letter-spacing: 0.01em;
+}
+
+.form-label .required {
+  color: hsl(var(--rose));
+  margin-left: 2px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 14px 18px;
+  border: 2px solid hsl(var(--border-soft));
+  border-radius: 14px;
+  font-size: 1rem;
+  font-family: var(--font-body);
+  color: hsl(var(--text-primary));
+  background: hsl(var(--warm-white));
+  transition: var(--transition-smooth);
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: hsl(var(--rose-light));
+  box-shadow: 0 0 0 4px hsl(350 85% 65% / 0.1);
+}
+
+.form-input::placeholder {
+  color: hsl(var(--text-muted));
+  font-size: 0.9rem;
+}
+
+.form-textarea {
+  min-height: 160px;
+  resize: vertical;
+  line-height: 1.8;
+}
+
+.form-hint {
+  font-size: 0.8rem;
+  color: hsl(var(--text-muted));
+  margin-top: 6px;
+}
+
+/* ===== Button ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 36px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  font-family: var(--font-body);
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: var(--transition-bounce);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  outline: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary {
+  background: var(--gradient-button);
+  color: white;
+  box-shadow: var(--button-shadow);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--button-shadow-hover);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: var(--button-shadow);
+}
+
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.15) 100%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.btn-primary:hover::after {
+  opacity: 1;
+}
+
+.btn-full {
+  width: 100%;
+}
+
+.btn-secondary {
+  background: white;
+  color: hsl(var(--rose));
+  border: 2px solid hsl(var(--border-soft));
+}
+
+.btn-secondary:hover {
+  border-color: hsl(var(--rose-light));
+  background: hsl(350 85% 97%);
+  transform: translateY(-2px);
+}
+
+/* ===== Button with heart icon ===== */
+.btn-heart-icon {
+  display: inline-block;
+  animation: heartPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes heartPulse {
+  0%, 100% { transform: scale(1); }
+  15% { transform: scale(1.25); }
+  30% { transform: scale(1); }
+  45% { transform: scale(1.2); }
+  60% { transform: scale(1); }
+}
+
+/* ===== Share Link Box ===== */
+.share-box {
+  margin-top: var(--space-md);
+  padding: var(--space-md);
+  background: hsl(350 85% 97%);
+  border-radius: 14px;
+  border: 1px dashed hsl(var(--rose-light));
+  text-align: center;
+  animation: fadeSlideIn 0.5s ease;
+}
+
+.share-box-label {
+  font-size: 0.85rem;
+  color: hsl(var(--text-secondary));
+  margin-bottom: var(--space-sm);
+  font-weight: 600;
+}
+
+.share-link-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 2px solid hsl(var(--border-soft));
+  word-break: break-all;
+  text-align: left;
+  font-size: 0.85rem;
+  color: hsl(var(--text-secondary));
+  margin-bottom: var(--space-sm);
+  font-family: monospace;
+}
+
+.btn-copy {
+  padding: 10px 24px;
+  font-size: 0.9rem;
+  border-radius: 12px;
+}
+
+.copied-toast {
+  display: inline-block;
+  font-size: 0.8rem;
+  color: hsl(150 60% 40%);
+  font-weight: 600;
+  animation: fadeInOut 2s ease forwards;
+  opacity: 0;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(4px); }
+  15% { opacity: 1; transform: translateY(0); }
+  75% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-4px); }
+}
+
+/* ===== Love Letter View ===== */
+.love-letter-scene {
+  text-align: center;
+}
+
+.love-letter-card {
+  background: var(--gradient-card);
+  border-radius: 24px;
+  padding: var(--space-xl) var(--space-lg);
+  box-shadow: var(--card-shadow-lg);
+  border: 1px solid hsl(var(--border-soft));
+  position: relative;
+  overflow: hidden;
+}
+
+.love-letter-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--gradient-heart);
+  border-radius: 24px 24px 0 0;
+}
+
+.love-letter-header {
+  margin-bottom: var(--space-lg);
+}
+
+.heart-big {
+  font-size: 64px;
+  display: block;
+  animation: heartPulse 2s ease-in-out infinite;
+  filter: drop-shadow(0 4px 12px hsl(350 85% 65% / 0.3));
+  margin-bottom: var(--space-sm);
+}
+
+.recipient-name {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  background: var(--gradient-heart);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: var(--space-xs);
+}
+
+.greeting-prefix {
+  font-size: 0.95rem;
+  color: hsl(var(--text-muted));
+}
+
+.love-letter-content {
+  background: hsl(30 30% 98%);
+  border-radius: 16px;
+  padding: var(--space-lg);
+  margin: var(--space-md) 0;
+  text-align: left;
+  line-height: 2;
+  font-size: 1.05rem;
+  color: hsl(var(--text-primary));
+  white-space: pre-wrap;
+  word-break: break-word;
+  border: 1px solid hsl(var(--border-soft));
+  position: relative;
+}
+
+.love-letter-content::before {
+  content: '"';
+  position: absolute;
+  top: -4px;
+  left: 12px;
+  font-size: 48px;
+  color: hsl(var(--rose-light));
+  opacity: 0.3;
+  font-family: var(--font-display);
+  line-height: 1;
+}
+
+.love-letter-footer {
+  margin-top: var(--space-lg);
+  text-align: right;
+  font-size: 1rem;
+  color: hsl(var(--text-secondary));
+  font-style: italic;
+}
+
+.sender-name {
+  font-weight: 600;
+  color: hsl(var(--rose-dark));
+  font-style: normal;
+}
+
+.love-letter-date {
+  font-size: 0.8rem;
+  color: hsl(var(--text-muted));
+  margin-top: 4px;
+}
+
+/* ===== Decorative ornaments ===== */
+.ornament-top, .ornament-bottom {
+  text-align: center;
+  font-size: 14px;
+  color: hsl(var(--rose-light));
+  letter-spacing: 8px;
+  opacity: 0.5;
+  margin: var(--space-sm) 0;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: var(--space-md) 0;
+  color: hsl(var(--border-soft));
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, hsl(var(--border-soft)), transparent);
+}
+
+.divider-heart {
+  font-size: 14px;
+  opacity: 0.5;
+}
+
+/* ===== View actions ===== */
+.view-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+  justify-content: center;
+}
+
+.btn-outline-rose {
+  background: white;
+  color: hsl(var(--rose));
+  border: 2px solid hsl(var(--rose-light));
+  font-size: 0.95rem;
+  padding: 12px 24px;
+}
+
+.btn-outline-rose:hover {
+  background: hsl(var(--rose));
+  color: white;
+  border-color: hsl(var(--rose));
+  transform: translateY(-2px);
+}
+
+/* ===== Confetti hearts (view mode) ===== */
+.confetti-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.confetti-heart {
+  position: absolute;
+  font-size: 20px;
+  animation: confettiFall linear forwards;
+}
+
+@keyframes confettiFall {
+  0% {
+    transform: translateY(-8vh) rotate(0deg) scale(0);
+    opacity: 0;
+  }
+  8% {
+    transform: translateY(0vh) rotate(15deg) scale(1.2);
+    opacity: 0.9;
+  }
+  25% {
+    transform: translateY(25vh) translateX(15px) rotate(120deg) scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(50vh) translateX(-10px) rotate(240deg) scale(0.9);
+    opacity: 0.6;
+  }
+  75% {
+    transform: translateY(75vh) translateX(8px) rotate(320deg) scale(0.7);
+    opacity: 0.35;
+  }
+  100% {
+    transform: translateY(110vh) translateX(-5px) rotate(380deg) scale(0.4);
+    opacity: 0;
+  }
+}
+
+/* ===== Create another button ===== */
+.create-another {
+  display: block;
+  text-align: center;
+  margin-top: var(--space-lg);
+  font-size: 0.9rem;
+}
+
+.create-another a {
+  color: hsl(var(--rose));
+  text-decoration: none;
+  font-weight: 600;
+  transition: var(--transition-smooth);
+}
+
+.create-another a:hover {
+  color: hsl(var(--rose-dark));
+  text-decoration: underline;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 480px) {
+  .app-container {
+    padding: var(--space-md) var(--space-sm);
+  }
+
+  .card {
+    padding: var(--space-md);
+    border-radius: 20px;
+  }
+
+  .card-lg {
+    padding: var(--space-md);
+    border-radius: 20px;
+  }
+
+  .form-title {
+    font-size: 1.5rem;
+  }
+
+  .love-letter-content {
+    padding: var(--space-md);
+    font-size: 1rem;
+  }
+
+  .btn {
+    padding: 14px 28px;
+    font-size: 1rem;
+    border-radius: 14px;
+  }
+
+  .view-actions {
+    flex-direction: column;
+  }
+
+  .view-actions .btn {
+    width: 100%;
+  }
+
+  .recipient-name {
+    font-size: 1.4rem;
+  }
+
+  .heart-big {
+    font-size: 48px;
+  }
+}
+
+@media (max-width: 360px) {
+  .app-container {
+    padding: var(--space-sm);
+  }
+
+  .card, .card-lg {
+    padding: var(--space-sm);
+    border-radius: 16px;
+  }
+
+  .form-input {
+    padding: 12px 14px;
+    font-size: 0.95rem;
+  }
+
+  .form-title {
+    font-size: 1.35rem;
+  }
+}
+
+/* ===== Accessibility ===== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* Print - hide decorations */
+@media print {
+  .hearts-bg, .confetti-container { display: none; }
+  body { background: white; }
+  .card, .love-letter-card { box-shadow: none; border: 1px solid #eee; }
+}
+</style>
+</head>
+<body>
+
+<!-- Floating hearts background -->
+<div class="hearts-bg" aria-hidden="true">
+  <span class="heart-float">&#10084;</span>
+  <span class="heart-float">&#9825;</span>
+  <span class="heart-float">&#10084;</span>
+  <span class="heart-float">&#9825;</span>
+  <span class="heart-float">&#10084;</span>
+  <span class="heart-float">&#9825;</span>
+  <span class="heart-float">&#10084;</span>
+  <span class="heart-float">&#9825;</span>
+  <span class="heart-float">&#10084;</span>
+  <span class="heart-float">&#9825;</span>
+  <span class="heart-float">&#10084;</span>
+  <span class="heart-float">&#9825;</span>
+  <span class="heart-float">&#10084;</span>
+  <span class="heart-float">&#9825;</span>
+  <span class="heart-float">&#10084;</span>
+</div>
+
+<!-- Confetti container (populated dynamically) -->
+<div class="confetti-container" id="confettiContainer" aria-hidden="true"></div>
+
+<!-- Main App -->
+<div class="app-container">
+
+  <!-- ===== SCENE 1: Form (Create Love Letter) ===== -->
+  <div class="scene active" id="formScene">
+    <div class="card">
+      <div class="form-header">
+        <span class="envelope-icon" aria-hidden="true">&#128140;</span>
+        <h1 class="form-title">写一封情书</h1>
+        <p class="form-subtitle">把想说的话，写成最美的告白</p>
+      </div>
+
+      <form id="loveLetterForm" autocomplete="off">
+        <div class="form-group">
+          <label class="form-label" for="recipientName">
+            TA 的名字 <span class="required">*</span>
+          </label>
+          <input
+            type="text"
+            id="recipientName"
+            class="form-input"
+            placeholder="心上人的名字..."
+            maxlength="30"
+            required
+            autofocus
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="message">
+            想对 TA 说的话 <span class="required">*</span>
+          </label>
+          <textarea
+            id="message"
+            class="form-input form-textarea"
+            placeholder="在这里写下你的心里话..."
+            maxlength="3000"
+            required
+          ></textarea>
+          <p class="form-hint">
+            <span id="charCount">0</span> / 3000 字
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="senderName">
+            你的名字
+          </label>
+          <input
+            type="text"
+            id="senderName"
+            class="form-input"
+            placeholder="留空则为匿名..."
+            maxlength="30"
+          >
+          <p class="form-hint">选填，可以保持神秘感</p>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full">
+          <span aria-hidden="true">&#128152;</span>
+          生成表白链接
+        </button>
+      </form>
+
+      <!-- Share box (shown after generating link) -->
+      <div class="share-box" id="shareBox" style="display:none;">
+        <p class="share-box-label">&#127873; 复制这条链接，发给 TA 吧</p>
+        <div class="share-link-display" id="shareLinkText"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+          <button type="button" class="btn btn-primary btn-copy" id="copyBtn" onclick="copyLink()">
+            &#128203; 复制链接
+          </button>
+          <button type="button" class="btn btn-secondary btn-copy" id="previewBtn" onclick="previewLetter()">
+            &#128065; 预览效果
+          </button>
+          <span class="copied-toast" id="copiedToast" style="display:none;">&#10003; 已复制！</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SCENE 2: Love Letter View ===== -->
+  <div class="scene" id="viewScene">
+    <div class="love-letter-card">
+
+      <div class="love-letter-header">
+        <span class="heart-big" aria-hidden="true">&#10084;&#65039;</span>
+        <h2 class="recipient-name" id="displayRecipient"></h2>
+        <p class="greeting-prefix">你收到了一封特别的情书</p>
+      </div>
+
+      <div class="ornament-top" aria-hidden="true">&#10022; &#10022; &#10022;</div>
+
+      <div class="love-letter-content" id="displayMessage"></div>
+
+      <div class="ornament-bottom" aria-hidden="true">&#10022; &#10022; &#10022;</div>
+
+      <div class="love-letter-footer" id="displayFooter"></div>
+
+      <div class="divider">
+        <span class="divider-heart" aria-hidden="true">&#10084;</span>
+      </div>
+
+      <div class="view-actions">
+        <button class="btn btn-primary" onclick="copyCurrentLink()" style="font-size:0.95rem;padding:12px 24px;">
+          &#128203; 复制链接
+        </button>
+        <button class="btn btn-outline-rose" onclick="shareCurrent()">
+          &#128279; 分享
+        </button>
+        <button class="btn btn-secondary" onclick="goToCreate()">
+          &#9997; 我也要写一封
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ===== DOM References =====
+  var formScene = document.getElementById('formScene');
+  var viewScene = document.getElementById('viewScene');
+  var loveLetterForm = document.getElementById('loveLetterForm');
+  var shareBox = document.getElementById('shareBox');
+  var shareLinkText = document.getElementById('shareLinkText');
+  var copiedToast = document.getElementById('copiedToast');
+  var charCount = document.getElementById('charCount');
+  var messageTextarea = document.getElementById('message');
+  var confettiContainer = document.getElementById('confettiContainer');
+
+  // Store the pending share URL (for preview button)
+  var pendingShareUrl = '';
+
+  // ===== Character count =====
+  messageTextarea.addEventListener('input', function() {
+    charCount.textContent = messageTextarea.value.length;
+  });
+
+  // ===== Parse URL hash to data =====
+  function parseHash() {
+    var hash = window.location.hash;
+    if (!hash || hash === '#') return null;
+
+    var encoded = hash.substring(1);
+
+    try {
+      // Reverse URL-safe base64: -_ -> +/
+      encoded = encoded.replace(/-/g, '+').replace(/_/g, '/');
+      // Add back padding
+      while (encoded.length % 4 !== 0) {
+        encoded += '=';
+      }
+      var json = decodeURIComponent(escape(atob(encoded)));
+      var data = JSON.parse(json);
+
+      if (data.r && data.m) {
+        return data;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // ===== Encode data to hash string (URL-safe base64) =====
+  function encodeData(recipient, message, sender) {
+    var data = {
+      r: recipient,
+      m: message,
+      s: sender || ''
+    };
+    var json = JSON.stringify(data);
+    // Standard base64 with unicode handling, then make URL-safe
+    var encoded = btoa(unescape(encodeURIComponent(json)));
+    // Replace +/ with -_ and remove padding = to make it URL-safe
+    encoded = encoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    return encoded;
+  }
+
+  // ===== Build shareable URL =====
+  function buildShareUrl(recipient, message, sender) {
+    var hash = encodeData(recipient, message, sender);
+    // Use href.split to get the correct base URL (works for both http:// and file://)
+    var baseUrl = window.location.href.split('#')[0];
+    var url = baseUrl + '#' + hash;
+    return url;
+  }
+
+  // ===== Show view scene =====
+  function showViewScene(data) {
+    formScene.classList.remove('active');
+    viewScene.classList.add('active');
+    shareBox.style.display = 'none';
+
+    document.getElementById('displayRecipient').textContent = '亲爱的 ' + data.r;
+    document.getElementById('displayMessage').textContent = data.m;
+
+    var senderName = data.s || '匿名';
+    var now = new Date();
+    var dateStr = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日';
+
+    document.getElementById('displayFooter').innerHTML =
+      '<span class="sender-name">— ' + escapeHTML(senderName) + '</span>' +
+      '<div class="love-letter-date">' + dateStr + '</div>';
+
+    triggerConfetti();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ===== Show form scene =====
+  function showFormScene() {
+    viewScene.classList.remove('active');
+    formScene.classList.add('active');
+    shareBox.style.display = 'none';
+    loveLetterForm.reset();
+    charCount.textContent = '0';
+    pendingShareUrl = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ===== Form submission - generate link without navigating =====
+  loveLetterForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    var recipient = document.getElementById('recipientName').value.trim();
+    var message = messageTextarea.value.trim();
+    var sender = document.getElementById('senderName').value.trim();
+
+    if (!recipient || !message) {
+      loveLetterForm.style.animation = 'none';
+      loveLetterForm.offsetHeight;
+      loveLetterForm.style.animation = 'shake 0.5s ease';
+      return;
+    }
+
+    // Build URL and show share box (don't navigate away)
+    var url = buildShareUrl(recipient, message, sender);
+    pendingShareUrl = url;
+    shareLinkText.textContent = url;
+    shareBox.style.display = 'block';
+    shareBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  // Add shake keyframe dynamically
+  var shakeStyle = document.createElement('style');
+  shakeStyle.textContent =
+    '@keyframes shake {' +
+    '0%, 100% { transform: translateX(0); }' +
+    '10%, 50%, 90% { transform: translateX(-4px); }' +
+    '30%, 70% { transform: translateX(4px); }' +
+    '}';
+  document.head.appendChild(shakeStyle);
+
+  // ===== Preview letter (navigate to view) =====
+  window.previewLetter = function() {
+    if (!pendingShareUrl) return;
+
+    var hashIndex = pendingShareUrl.indexOf('#');
+    if (hashIndex !== -1) {
+      window.location.hash = pendingShareUrl.substring(hashIndex + 1);
+    }
+  };
+
+  // ===== Copy link (form page share box) =====
+  window.copyLink = function() {
+    var url = shareLinkText.textContent;
+    copyToClipboard(url, copiedToast);
+  };
+
+  // ===== Copy link (view page) =====
+  window.copyCurrentLink = function() {
+    var viewActions = document.querySelector('.view-actions');
+    var toast = document.createElement('span');
+    toast.textContent = '✓ 已复制！';
+    toast.style.cssText =
+      'display:inline;animation:fadeInOut 2s ease forwards;color:hsl(150 60% 40%);font-weight:600;font-size:0.8rem;';
+
+    viewActions.appendChild(toast);
+    setTimeout(function() {
+      if (toast.parentNode) toast.parentNode.removeChild(toast);
+    }, 2200);
+
+    copyToClipboard(window.location.href);
+  };
+
+  function copyToClipboard(text, toastEl) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function() {
+        if (toastEl) showCopiedToast(toastEl);
+      }).catch(function() {
+        fallbackCopy(text, toastEl);
+      });
+    } else {
+      fallbackCopy(text, toastEl);
+    }
+  }
+
+  function fallbackCopy(text, toastEl) {
+    var textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.cssText = 'position:fixed;opacity:0;';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      if (toastEl) showCopiedToast(toastEl);
+    } catch (e) {
+      alert('链接：\n' + text);
+    }
+    document.body.removeChild(textarea);
+  }
+
+  function showCopiedToast(toastEl) {
+    toastEl.style.display = 'inline';
+    toastEl.style.animation = 'none';
+    toastEl.offsetHeight;
+    toastEl.style.animation = 'fadeInOut 2s ease forwards';
+    setTimeout(function() {
+      toastEl.style.display = 'none';
+    }, 2000);
+  }
+
+  // ===== Share current view (native share API) =====
+  window.shareCurrent = function() {
+    var url = window.location.href;
+    if (navigator.share) {
+      navigator.share({
+        title: '一封写给你的情书',
+        text: '你收到了一封特别的情书，快打开看看吧~',
+        url: url
+      }).catch(function() {});
+    } else {
+      copyToClipboard(url);
+      alert('链接已复制！快去发给 TA 吧~');
+    }
+  };
+
+  // ===== Go back to create form =====
+  window.goToCreate = function() {
+    window.location.hash = '';
+    showFormScene();
+  };
+
+  // ===== Confetti hearts =====
+  function triggerConfetti() {
+    var hearts = ['&#10084;', '&#9825;', '&#128150;', '&#128151;', '&#128152;', '&#128153;', '&#128154;', '&#128155;', '&#128156;', '&#128157;', '&#128158;', '&#128159;'];
+    var fragment = document.createDocumentFragment();
+
+    for (var i = 0; i < 35; i++) {
+      var heart = document.createElement('span');
+      heart.className = 'confetti-heart';
+      heart.innerHTML = hearts[Math.floor(Math.random() * hearts.length)];
+      heart.style.left = Math.random() * 100 + '%';
+      heart.style.fontSize = (14 + Math.random() * 20) + 'px';
+      heart.style.animationDuration = (7 + Math.random() * 8) + 's';
+      heart.style.animationDelay = Math.random() * 4 + 's';
+      fragment.appendChild(heart);
+    }
+
+    confettiContainer.innerHTML = '';
+    confettiContainer.appendChild(fragment);
+
+    setTimeout(function() {
+      confettiContainer.innerHTML = '';
+    }, 20000);
+  }
+
+  // ===== Escape HTML =====
+  function escapeHTML(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ===== Hash change handler =====
+  function handleHashChange() {
+    var data = parseHash();
+    if (data) {
+      showViewScene(data);
+    } else {
+      showFormScene();
+    }
+  }
+
+  window.addEventListener('hashchange', handleHashChange);
+
+  // ===== Initial load =====
+  if (window.location.hash && window.location.hash !== '#') {
+    var data = parseHash();
+    if (data) {
+      showViewScene(data);
+    } else {
+      showFormScene();
+    }
+  } else {
+    showFormScene();
+  }
+
+})();
+</script>
+
+</body>
+</html>
