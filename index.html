@@ -1110,7 +1110,177 @@ body {
     charCount.textContent = messageTextarea.value.length;
   });
 
-  // ===== Parse URL hash to data =====
+  // ===== LZ-String Compression (for shorter URLs) =====
+  var LZUtil = {
+    compress: function(uncompressed) {
+      if (typeof uncompressed !== 'string') return '';
+      var context_dictionary = {};
+      var context_c = '';
+      var context_wc = '';
+      var context_w = '';
+      var context_dictSize = 3;
+      var context_numBits = 2;
+      var context_buffer = [];
+      var context_data_val = 0;
+      var context_data_position = 0;
+      
+      function context_writeBit(value) {
+        context_data_val = (context_data_val << 1) | value;
+        context_data_position++;
+        if (context_data_position === 16) {
+          context_buffer.push(String.fromCharCode(context_data_val));
+          context_data_val = 0;
+          context_data_position = 0;
+        }
+      }
+      
+      function context_writeBits(value, numBits) {
+        for (var i = 0; i < numBits; i++) {
+          context_writeBit(value & 1);
+          value = value >> 1;
+        }
+      }
+      
+      for (var ii = 0; ii < uncompressed.length; ii++) {
+        context_c = uncompressed.charAt(ii);
+        if (!Object.prototype.hasOwnProperty.call(context_dictionary, context_c)) {
+          context_dictionary[context_c] = context_dictSize++;
+        }
+        context_wc = context_w + context_c;
+        if (Object.prototype.hasOwnProperty.call(context_dictionary, context_wc)) {
+          context_w = context_wc;
+        } else {
+          if (context_w.charCodeAt(0) < 256) {
+            context_writeBits(0, context_numBits);
+            context_writeBits(context_w.charCodeAt(0), 8);
+          } else {
+            context_writeBits(1, context_numBits);
+            context_writeBits(context_w.charCodeAt(0), 16);
+          }
+          context_dictionary[context_wc] = context_dictSize++;
+          context_w = String(context_c);
+        }
+      }
+      
+      if (context_w !== '') {
+        if (context_w.charCodeAt(0) < 256) {
+          context_writeBits(0, context_numBits);
+          context_writeBits(context_w.charCodeAt(0), 8);
+        } else {
+          context_writeBits(1, context_numBits);
+          context_writeBits(context_w.charCodeAt(0), 16);
+        }
+      }
+      
+      context_writeBits(2, context_numBits);
+      
+      if (context_data_position > 0) {
+        context_buffer.push(String.fromCharCode(context_data_val));
+      }
+      
+      return context_buffer.join('');
+    },
+    
+    decompress: function(compressed) {
+      if (!compressed || compressed.length === 0) return '';
+      var dictionary = [];
+      var dictSize = 4;
+      var numBits = 3;
+      var entry = '';
+      var result = [];
+      var data = { val: compressed.charCodeAt(0), position: 16, index: 1 };
+      
+      function readBits(numBits) {
+        var result = 0;
+        for (var i = 0; i < numBits; i++) {
+          if (data.position === 0) {
+            data.val = compressed.charCodeAt(data.index++);
+            data.position = 16;
+          }
+          result |= ((data.val >> (data.position - 1)) & 1) << (numBits - i - 1);
+          data.position--;
+        }
+        return result;
+      }
+      
+      for (var i = 0; i < 3; i++) {
+        dictionary[i] = i;
+      }
+      
+      var bits = readBits(numBits);
+      switch (bits) {
+        case 0: 
+          bits = readBits(8);
+          entry = String.fromCharCode(bits);
+          break;
+        case 1:
+          bits = readBits(16);
+          entry = String.fromCharCode(bits);
+          break;
+        case 2:
+          return '';
+      }
+      dictionary[3] = entry;
+      result.push(entry);
+      var w = entry;
+      
+      while (true) {
+        if (data.index >= compressed.length) break;
+        
+        var c = readBits(numBits);
+        switch (c) {
+          case 0:
+            bits = readBits(8);
+            entry = String.fromCharCode(bits);
+            break;
+          case 1:
+            bits = readBits(16);
+            entry = String.fromCharCode(bits);
+            break;
+          case 2:
+            return result.join('');
+        }
+        
+        if (!dictionary[c]) {
+          entry = w + w.charAt(0);
+        } else {
+          entry = dictionary[c];
+        }
+        
+        result.push(entry);
+        dictionary[dictSize++] = w + entry.charAt(0);
+        w = entry;
+      }
+      
+      return result.join('');
+    }
+  };
+
+  // ===== Encode data to hash string (with compression for shorter URL) =====
+  function encodeData(recipient, message, sender) {
+    // Use minimal JSON structure with single-char keys
+    var compact = {
+      r: recipient,
+      m: message,
+      s: sender || ''
+    };
+    var json = JSON.stringify(compact);
+    
+    try {
+      // Compress the JSON string using LZ compression
+      var compressed = LZUtil.compress(json);
+      // Encode to base64 and make URL-safe
+      var encoded = btoa(unescape(encodeURIComponent(compressed)));
+      encoded = encoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      return encoded;
+    } catch (e) {
+      // Fallback: simple base64 without compression
+      var encoded = btoa(unescape(encodeURIComponent(json)));
+      return encoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+  }
+  
+  // ===== Parse URL hash to data (with decompression) =====
   function parseHash() {
     var hash = window.location.hash;
     if (!hash || hash === '#') return null;
@@ -1124,31 +1294,30 @@ body {
       while (encoded.length % 4 !== 0) {
         encoded += '=';
       }
-      var json = decodeURIComponent(escape(atob(encoded)));
-      var data = JSON.parse(json);
-
-      if (data.r && data.m) {
-        return data;
+      
+      // Decode from base64
+      var compressed = decodeURIComponent(escape(atob(encoded)));
+      
+      // Try to decompress first
+      try {
+        var json = LZUtil.decompress(compressed);
+        var data = JSON.parse(json);
+        if (data.r && data.m) {
+          return data;
+        }
+      } catch (decompressError) {
+        // If decompression fails, try direct JSON parse (backward compatibility)
+        var json = compressed;
+        var data = JSON.parse(json);
+        if (data.r && data.m) {
+          return data;
+        }
       }
+      
       return null;
     } catch (e) {
       return null;
     }
-  }
-
-  // ===== Encode data to hash string (URL-safe base64) =====
-  function encodeData(recipient, message, sender) {
-    var data = {
-      r: recipient,
-      m: message,
-      s: sender || ''
-    };
-    var json = JSON.stringify(data);
-    // Standard base64 with unicode handling, then make URL-safe
-    var encoded = btoa(unescape(encodeURIComponent(json)));
-    // Replace +/ with -_ and remove padding = to make it URL-safe
-    encoded = encoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    return encoded;
   }
 
   // ===== Build shareable URL =====
