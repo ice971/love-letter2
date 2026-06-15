@@ -403,6 +403,108 @@ body {
   100% { opacity: 0; transform: translateY(-4px); }
 }
 
+/* ===== Envelope Opening Scene ===== */
+.envelope-scene {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  animation: fadeSlideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.envelope-scene.active {
+  display: flex;
+}
+
+.envelope-container {
+  position: relative;
+  width: 280px;
+  height: 200px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  margin-bottom: var(--space-lg);
+}
+
+.envelope-container:hover {
+  transform: scale(1.05);
+}
+
+.envelope-body {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, hsl(350 85% 75%) 0%, hsl(350 75% 68%) 100%);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px hsl(350 60% 60% / 0.25);
+  overflow: hidden;
+}
+
+.envelope-flap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  background: linear-gradient(135deg, hsl(350 85% 70%) 0%, hsl(350 75% 63%) 100%);
+  clip-path: polygon(0 0, 50% 100%, 100% 0);
+  transform-origin: top center;
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 2;
+}
+
+.envelope-container.opened .envelope-flap {
+  transform: rotateX(180deg);
+}
+
+.envelope-heart-seal {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 48px;
+  color: white;
+  filter: drop-shadow(0 2px 8px hsl(350 85% 65% / 0.4));
+  animation: heartPulse 2s ease-in-out infinite;
+  z-index: 3;
+  transition: opacity 0.4s ease;
+}
+
+.envelope-container.opened .envelope-heart-seal {
+  opacity: 0;
+}
+
+.envelope-letter-preview {
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  width: 80%;
+  height: 80%;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(0);
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.3s;
+  z-index: 1;
+}
+
+.envelope-container.opened .envelope-letter-preview {
+  transform: translateY(-60px);
+}
+
+.envelope-hint {
+  font-size: 1rem;
+  color: hsl(var(--text-muted));
+  text-align: center;
+  animation: fadeInOut 3s ease-in-out infinite;
+  margin-top: var(--space-md);
+}
+
+@keyframes fadeInOut {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
 /* ===== Love Letter View ===== */
 .love-letter-scene {
   text-align: center;
@@ -507,6 +609,37 @@ body {
     opacity: 1;
     transform: translateY(0);
     filter: blur(0);
+  }
+}
+
+/* Character-by-character reveal */
+.char-container {
+  line-height: 2;
+  font-size: 1.05rem;
+}
+
+.typewriter-char {
+  display: inline-block;
+  opacity: 0;
+  animation: charFadeIn 0.6s ease forwards;
+  color: hsl(var(--text-primary));
+  transition: color 0.3s ease;
+}
+
+@keyframes charFadeIn {
+  0% {
+    opacity: 0;
+    color: hsl(350 85% 75% / 0.2);
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 0.5;
+    color: hsl(350 85% 65% / 0.6);
+  }
+  100% {
+    opacity: 1;
+    color: hsl(var(--text-primary));
+    transform: scale(1);
   }
 }
 
@@ -819,6 +952,7 @@ body {
             required
             autofocus
           >
+          <p class="form-hint" id="recipientHint" style="display:none;">这是你要回信给的人</p>
         </div>
 
         <div class="form-group">
@@ -874,7 +1008,18 @@ body {
     </div>
   </div>
 
-  <!-- ===== SCENE 2: Love Letter View ===== -->
+  <!-- ===== SCENE 2: Envelope Opening ===== -->
+  <div class="envelope-scene" id="envelopeScene">
+    <div class="envelope-container" id="envelopeContainer" onclick="openEnvelope()">
+      <div class="envelope-body"></div>
+      <div class="envelope-flap"></div>
+      <div class="envelope-heart-seal">&#10084;</div>
+      <div class="envelope-letter-preview"></div>
+    </div>
+    <p class="envelope-hint">点击信封打开情书</p>
+  </div>
+
+  <!-- ===== SCENE 3: Love Letter View ===== -->
   <div class="scene" id="viewScene">
     <div class="love-letter-card">
 
@@ -918,6 +1063,7 @@ body {
 
   // ===== DOM References =====
   var formScene = document.getElementById('formScene');
+  var envelopeScene = document.getElementById('envelopeScene');
   var viewScene = document.getElementById('viewScene');
   var loveLetterForm = document.getElementById('loveLetterForm');
   var shareBox = document.getElementById('shareBox');
@@ -926,9 +1072,14 @@ body {
   var charCount = document.getElementById('charCount');
   var messageTextarea = document.getElementById('message');
   var confettiContainer = document.getElementById('confettiContainer');
+  var recipientNameInput = document.getElementById('recipientName');
+  var recipientHint = document.getElementById('recipientHint');
 
   // Store the pending share URL (for preview button)
   var pendingShareUrl = '';
+  
+  // Store current letter data for reply
+  var currentLetterData = null;
 
   // ===== Character count =====
   messageTextarea.addEventListener('input', function() {
@@ -985,34 +1136,59 @@ body {
     return url;
   }
 
-  // ===== Show view scene =====
+  // ===== Show view scene (first show envelope) =====
   function showViewScene(data) {
     formScene.classList.remove('active');
-    viewScene.classList.add('active');
+    envelopeScene.classList.add('active');
+    viewScene.classList.remove('active');
     shareBox.style.display = 'none';
+    
+    // Store letter data for reply
+    currentLetterData = data;
 
-    document.getElementById('displayRecipient').textContent = '亲爱的 ' + data.r;
-
-    // Typewriter effect: reveal text line by line
-    var msgEl = document.getElementById('displayMessage');
-    startTypewriter(msgEl, data.m);
-
-    // Hide footer initially, show after typewriter completes
-    var footerEl = document.getElementById('displayFooter');
-    var senderName = data.s || '匿名';
-    var now = new Date();
-    var dateStr = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日';
-    footerEl.innerHTML =
-      '<span class="sender-name">— ' + escapeHTML(senderName) + '</span>' +
-      '<div class="love-letter-date">' + dateStr + '</div>';
-    footerEl.style.opacity = '0';
-    footerEl.style.transition = 'opacity 1s ease';
-
-    triggerConfetti();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Pre-fill recipient name with sender's name from original letter
+    var replySender = data.s || '匿名';
+    recipientNameInput.value = replySender;
+    recipientNameInput.readOnly = true;
+    recipientNameInput.style.background = 'hsl(30 30% 96%)';
+    recipientHint.style.display = 'block';
   }
+  
+  // ===== Open envelope animation =====
+  window.openEnvelope = function() {
+    if (!currentLetterData) return;
+    
+    var envelopeContainer = document.getElementById('envelopeContainer');
+    envelopeContainer.classList.add('opened');
+    
+    // Wait for envelope animation, then show letter
+    setTimeout(function() {
+      envelopeScene.classList.remove('active');
+      viewScene.classList.add('active');
+      
+      document.getElementById('displayRecipient').textContent = '亲爱的 ' + currentLetterData.r;
+      
+      // Typewriter effect: reveal text character by character
+      var msgEl = document.getElementById('displayMessage');
+      startTypewriter(msgEl, currentLetterData.m);
+      
+      // Hide footer initially, show after typewriter completes
+      var footerEl = document.getElementById('displayFooter');
+      var senderName = currentLetterData.s || '匿名';
+      var now = new Date();
+      var dateStr = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日';
+      footerEl.innerHTML =
+        '<span class="sender-name">— ' + escapeHTML(senderName) + '</span>' +
+        '<div class="love-letter-date">' + dateStr + '</div>';
+      footerEl.style.opacity = '0';
+      footerEl.style.transition = 'opacity 1s ease';
+      
+      triggerConfetti();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 1200);
+  };
 
-  // ===== Typewriter: reveal text line by line =====
+  // ===== Typewriter: reveal text character by character with fade-in =====
   var typewriterTimer = null;
 
   function startTypewriter(el, text) {
@@ -1025,17 +1201,22 @@ body {
     unfurl.className = 'scroll-unfurl';
     el.appendChild(unfurl);
 
-    // Split by newlines, preserve empty lines
-    var lines = text.split('\n');
+    // Create container for characters
+    var charContainer = document.createElement('div');
+    charContainer.className = 'char-container';
+    el.appendChild(charContainer);
 
-    // Create all line elements (hidden initially)
+    // Split text into lines first, then into characters
+    var lines = text.split('\n');
+    var allChars = [];
+    
     for (var i = 0; i < lines.length; i++) {
-      var lineSpan = document.createElement('span');
-      lineSpan.className = 'typewriter-line';
-      lineSpan.textContent = lines[i] || '\u00A0'; // Use non-breaking space for empty lines
-      lineSpan.style.animationDelay = '0s';
-      lineSpan.style.animationPlayState = 'paused';
-      el.appendChild(lineSpan);
+      for (var j = 0; j < lines[i].length; j++) {
+        allChars.push({ type: 'char', value: lines[i][j] });
+      }
+      if (i < lines.length - 1) {
+        allChars.push({ type: 'newline' });
+      }
     }
 
     // Add blinking cursor
@@ -1044,24 +1225,34 @@ body {
     cursor.style.opacity = '0';
     el.appendChild(cursor);
 
-    // Reveal lines one by one
-    var lineEls = el.querySelectorAll('.typewriter-line');
+    // Reveal characters one by one
     var footerEl = document.getElementById('displayFooter');
     var idx = 0;
 
     function revealNext() {
-      if (idx < lineEls.length) {
-        lineEls[idx].style.animationPlayState = 'running';
+      if (idx < allChars.length) {
         cursor.style.opacity = '1';
-        // Move cursor to after the current line
+        
+        if (allChars[idx].type === 'newline') {
+          // Insert line break
+          charContainer.appendChild(document.createElement('br'));
+        } else {
+          // Create character span with fade-in effect
+          var charSpan = document.createElement('span');
+          charSpan.className = 'typewriter-char';
+          charSpan.textContent = allChars[idx].value;
+          charContainer.appendChild(charSpan);
+        }
+        
+        // Move cursor to end
         el.appendChild(cursor);
-
+        
         idx++;
-        // Delay between lines: 300-600ms for short lines, faster for empty
-        var delay = lineEls[idx - 1].textContent.trim().length < 2 ? 150 : 300 + Math.random() * 200;
+        // Slower speed: 80-150ms per character
+        var delay = 80 + Math.random() * 70;
         typewriterTimer = setTimeout(revealNext, delay);
       } else {
-        // All lines revealed, keep cursor blinking briefly then fade
+        // All characters revealed, keep cursor blinking briefly then fade
         typewriterTimer = setTimeout(function() {
           cursor.style.opacity = '0';
           // Show footer
@@ -1073,18 +1264,25 @@ body {
     }
 
     // Start after a short initial delay
-    typewriterTimer = setTimeout(revealNext, 400);
+    typewriterTimer = setTimeout(revealNext, 600);
   }
 
   // ===== Show form scene =====
   function showFormScene() {
     if (typewriterTimer) clearTimeout(typewriterTimer);
+    envelopeScene.classList.remove('active');
     viewScene.classList.remove('active');
     formScene.classList.add('active');
     shareBox.style.display = 'none';
     loveLetterForm.reset();
     charCount.textContent = '0';
     pendingShareUrl = '';
+    
+    // Reset recipient input state (remove reply lock)
+    recipientNameInput.readOnly = false;
+    recipientNameInput.style.background = 'hsl(var(--warm-white))';
+    recipientHint.style.display = 'none';
+    
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
