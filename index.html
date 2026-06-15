@@ -484,6 +484,68 @@ body {
   line-height: 1;
 }
 
+/* ===== Typewriter effect ===== */
+.typewriter-line {
+  display: block;
+  opacity: 0;
+  transform: translateY(8px);
+  animation: lineReveal 0.5s ease forwards;
+  min-height: 1.2em;
+}
+
+.typewriter-line:empty {
+  min-height: 0.8em;
+}
+
+@keyframes lineReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+    filter: blur(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.typewriter-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  background: hsl(var(--rose));
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: cursorBlink 0.8s ease-in-out infinite;
+}
+
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Scroll unfurl decoration */
+.scroll-unfurl {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2px;
+  background: var(--gradient-heart);
+  border-radius: 1px;
+  animation: unfurlLine 1.2s ease forwards;
+  animation-delay: 0.3s;
+  z-index: 1;
+}
+
+@keyframes unfurlLine {
+  0% { width: 0; opacity: 0; }
+  30% { opacity: 1; }
+  100% { width: 80%; opacity: 0.4; }
+}
+
 .love-letter-footer {
   margin-top: var(--space-lg);
   text-align: right;
@@ -842,7 +904,7 @@ body {
           &#128279; 分享
         </button>
         <button class="btn btn-secondary" onclick="goToCreate()">
-          &#9997; 我也要写一封
+          &#128140; 回信
         </button>
       </div>
     </div>
@@ -930,22 +992,93 @@ body {
     shareBox.style.display = 'none';
 
     document.getElementById('displayRecipient').textContent = '亲爱的 ' + data.r;
-    document.getElementById('displayMessage').textContent = data.m;
 
+    // Typewriter effect: reveal text line by line
+    var msgEl = document.getElementById('displayMessage');
+    startTypewriter(msgEl, data.m);
+
+    // Hide footer initially, show after typewriter completes
+    var footerEl = document.getElementById('displayFooter');
     var senderName = data.s || '匿名';
     var now = new Date();
     var dateStr = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日';
-
-    document.getElementById('displayFooter').innerHTML =
+    footerEl.innerHTML =
       '<span class="sender-name">— ' + escapeHTML(senderName) + '</span>' +
       '<div class="love-letter-date">' + dateStr + '</div>';
+    footerEl.style.opacity = '0';
+    footerEl.style.transition = 'opacity 1s ease';
 
     triggerConfetti();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  // ===== Typewriter: reveal text line by line =====
+  var typewriterTimer = null;
+
+  function startTypewriter(el, text) {
+    // Clear any existing animation
+    if (typewriterTimer) clearTimeout(typewriterTimer);
+    el.innerHTML = '';
+
+    // Add scroll unfurl decoration
+    var unfurl = document.createElement('div');
+    unfurl.className = 'scroll-unfurl';
+    el.appendChild(unfurl);
+
+    // Split by newlines, preserve empty lines
+    var lines = text.split('\n');
+
+    // Create all line elements (hidden initially)
+    for (var i = 0; i < lines.length; i++) {
+      var lineSpan = document.createElement('span');
+      lineSpan.className = 'typewriter-line';
+      lineSpan.textContent = lines[i] || '\u00A0'; // Use non-breaking space for empty lines
+      lineSpan.style.animationDelay = '0s';
+      lineSpan.style.animationPlayState = 'paused';
+      el.appendChild(lineSpan);
+    }
+
+    // Add blinking cursor
+    var cursor = document.createElement('span');
+    cursor.className = 'typewriter-cursor';
+    cursor.style.opacity = '0';
+    el.appendChild(cursor);
+
+    // Reveal lines one by one
+    var lineEls = el.querySelectorAll('.typewriter-line');
+    var footerEl = document.getElementById('displayFooter');
+    var idx = 0;
+
+    function revealNext() {
+      if (idx < lineEls.length) {
+        lineEls[idx].style.animationPlayState = 'running';
+        cursor.style.opacity = '1';
+        // Move cursor to after the current line
+        el.appendChild(cursor);
+
+        idx++;
+        // Delay between lines: 300-600ms for short lines, faster for empty
+        var delay = lineEls[idx - 1].textContent.trim().length < 2 ? 150 : 300 + Math.random() * 200;
+        typewriterTimer = setTimeout(revealNext, delay);
+      } else {
+        // All lines revealed, keep cursor blinking briefly then fade
+        typewriterTimer = setTimeout(function() {
+          cursor.style.opacity = '0';
+          // Show footer
+          if (footerEl) {
+            footerEl.style.opacity = '1';
+          }
+        }, 1200);
+      }
+    }
+
+    // Start after a short initial delay
+    typewriterTimer = setTimeout(revealNext, 400);
+  }
+
   // ===== Show form scene =====
   function showFormScene() {
+    if (typewriterTimer) clearTimeout(typewriterTimer);
     viewScene.classList.remove('active');
     formScene.classList.add('active');
     shareBox.style.display = 'none';
@@ -1074,6 +1207,7 @@ body {
 
   // ===== Go back to create form =====
   window.goToCreate = function() {
+    if (typewriterTimer) clearTimeout(typewriterTimer);
     window.location.hash = '';
     showFormScene();
   };
