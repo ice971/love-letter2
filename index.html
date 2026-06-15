@@ -1256,7 +1256,7 @@ body {
     }
   };
 
-  // ===== Encode data to hash string (with compression for shorter URL) =====
+  // ===== Encode data to hash string (simple base64, no compression for reliability) =====
   function encodeData(recipient, message, sender) {
     // Use minimal JSON structure with single-char keys
     var compact = {
@@ -1266,21 +1266,13 @@ body {
     };
     var json = JSON.stringify(compact);
     
-    try {
-      // Compress the JSON string using LZ compression
-      var compressed = LZUtil.compress(json);
-      // Encode to base64 and make URL-safe
-      var encoded = btoa(unescape(encodeURIComponent(compressed)));
-      encoded = encoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-      return encoded;
-    } catch (e) {
-      // Fallback: simple base64 without compression
-      var encoded = btoa(unescape(encodeURIComponent(json)));
-      return encoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    }
+    // Standard base64 with unicode handling, then make URL-safe
+    var encoded = btoa(unescape(encodeURIComponent(json)));
+    encoded = encoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    return encoded;
   }
   
-  // ===== Parse URL hash to data (with decompression) =====
+  // ===== Parse URL hash to data (simple base64 decode) =====
   function parseHash() {
     var hash = window.location.hash;
     if (!hash || hash === '#') return null;
@@ -1295,32 +1287,16 @@ body {
         encoded += '=';
       }
       
-      // Decode from base64
-      var decoded = decodeURIComponent(escape(atob(encoded)));
-      
-      // Try to decompress first (new format with LZ compression)
-      try {
-        var json = LZUtil.decompress(decoded);
-        var data = JSON.parse(json);
-        if (data.r && data.m) {
-          return data;
-        }
-      } catch (decompressError) {
-        // If decompression fails, try direct JSON parse (old format without compression)
-        // The decoded string might already be JSON
-        try {
-          var data = JSON.parse(decoded);
-          if (data.r && data.m) {
-            return data;
-          }
-        } catch (jsonError) {
-          // Both methods failed
-          return null;
-        }
+      // Decode from base64 and parse JSON
+      var json = decodeURIComponent(escape(atob(encoded)));
+      var data = JSON.parse(json);
+
+      if (data.r && data.m) {
+        return data;
       }
-      
       return null;
     } catch (e) {
+      console.error('Failed to parse hash:', e.message);
       return null;
     }
   }
@@ -1529,12 +1505,16 @@ body {
       return;
     }
 
+    console.log('Generating link with:', { recipient, message, sender });
+    
     // Build URL and show share box (don't navigate away)
     var url = buildShareUrl(recipient, message, sender);
     pendingShareUrl = url;
     shareLinkText.textContent = url;
     shareBox.style.display = 'block';
     shareBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    console.log('Generated URL hash length:', url.split('#')[1].length);
   });
 
   // Add shake keyframe dynamically
