@@ -1406,12 +1406,20 @@ body {
   // ===== Go back to create form (reply mode) =====
   window.goToCreate = function() {
     if (typewriterTimer) clearTimeout(typewriterTimer);
-    window.location.hash = '';
     
-    // Keep the currentLetterData for reply
+    // Keep the currentLetterData for reply BEFORE clearing
     var replyData = currentLetterData;
     
-    showFormScene();
+    window.location.hash = '';
+    
+    // Show form scene first (this will reset the form)
+    envelopeScene.classList.remove('active');
+    viewScene.classList.remove('active');
+    formScene.classList.add('active');
+    shareBox.style.display = 'none';
+    loveLetterForm.reset();
+    charCount.textContent = '0';
+    pendingShareUrl = '';
     
     // After showing form, set up reply mode if we have letter data
     if (replyData) {
@@ -1420,7 +1428,14 @@ body {
       recipientNameInput.readOnly = true;
       recipientNameInput.style.background = 'hsl(30 30% 96%)';
       recipientHint.style.display = 'block';
+    } else {
+      // Normal mode: ensure recipient is editable
+      recipientNameInput.readOnly = false;
+      recipientNameInput.style.background = 'hsl(var(--warm-white))';
+      recipientHint.style.display = 'none';
     }
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // ===== Confetti hearts =====
