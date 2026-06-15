@@ -798,6 +798,30 @@ body {
   }
 }
 
+/* Click/touch generated hearts */
+.click-heart {
+  animation: clickHeartFloat 2s ease-out forwards !important;
+}
+
+@keyframes clickHeartFloat {
+  0% {
+    transform: translateY(0) scale(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    transform: translateY(-20px) scale(1.2) rotate(10deg);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-60px) scale(1) rotate(-15deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-120px) scale(0.6) rotate(-30deg);
+    opacity: 0;
+  }
+}
+
 /* ===== Create another button ===== */
 .create-another {
   display: block;
@@ -1187,6 +1211,48 @@ body {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 1200);
   };
+  
+  // ===== Click/touch to create hearts =====
+  function createClickHeart(x, y) {
+    var hearts = ['&#10084;', '&#9825;', '&#128150;', '&#128151;', '&#128152;'];
+    var heart = document.createElement('span');
+    heart.className = 'click-heart';
+    heart.innerHTML = hearts[Math.floor(Math.random() * hearts.length)];
+    heart.style.position = 'fixed';
+    heart.style.left = x + 'px';
+    heart.style.top = y + 'px';
+    heart.style.fontSize = (20 + Math.random() * 16) + 'px';
+    heart.style.pointerEvents = 'none';
+    heart.style.zIndex = '100';
+    heart.style.animation = 'clickHeartFloat 2s ease-out forwards';
+    
+    document.body.appendChild(heart);
+    
+    setTimeout(function() {
+      if (heart.parentNode) {
+        heart.parentNode.removeChild(heart);
+      }
+    }, 2000);
+  }
+  
+  // Add click/touch event listeners
+  var isViewingMode = false;
+  
+  document.addEventListener('click', function(e) {
+    // Only create hearts when viewing a letter (not in form mode)
+    if (viewScene.classList.contains('active')) {
+      createClickHeart(e.clientX, e.clientY);
+    }
+  });
+  
+  document.addEventListener('touchstart', function(e) {
+    // Only create hearts when viewing a letter
+    if (viewScene.classList.contains('active')) {
+      for (var i = 0; i < e.touches.length; i++) {
+        createClickHeart(e.touches[i].clientX, e.touches[i].clientY);
+      }
+    }
+  }, { passive: true });
 
   // ===== Typewriter: reveal text character by character with fade-in =====
   var typewriterTimer = null;
@@ -1219,20 +1285,12 @@ body {
       }
     }
 
-    // Add blinking cursor
-    var cursor = document.createElement('span');
-    cursor.className = 'typewriter-cursor';
-    cursor.style.opacity = '0';
-    el.appendChild(cursor);
-
-    // Reveal characters one by one
+    // Reveal characters one by one (no cursor)
     var footerEl = document.getElementById('displayFooter');
     var idx = 0;
 
     function revealNext() {
       if (idx < allChars.length) {
-        cursor.style.opacity = '1';
-        
         if (allChars[idx].type === 'newline') {
           // Insert line break
           charContainer.appendChild(document.createElement('br'));
@@ -1244,22 +1302,18 @@ body {
           charContainer.appendChild(charSpan);
         }
         
-        // Move cursor to end
-        el.appendChild(cursor);
-        
         idx++;
-        // Slower speed: 80-150ms per character
-        var delay = 80 + Math.random() * 70;
+        // Slower speed: 0.8x of original (100-187.5ms per character)
+        var delay = (80 + Math.random() * 70) * 1.25;
         typewriterTimer = setTimeout(revealNext, delay);
       } else {
-        // All characters revealed, keep cursor blinking briefly then fade
+        // All characters revealed, show footer after a brief delay
         typewriterTimer = setTimeout(function() {
-          cursor.style.opacity = '0';
           // Show footer
           if (footerEl) {
             footerEl.style.opacity = '1';
           }
-        }, 1200);
+        }, 800);
       }
     }
 
@@ -1409,6 +1463,7 @@ body {
     
     // Keep the currentLetterData for reply BEFORE clearing
     var replyData = currentLetterData;
+    console.log('goToCreate called, currentLetterData:', replyData);
     
     window.location.hash = '';
     
@@ -1421,45 +1476,140 @@ body {
     charCount.textContent = '0';
     pendingShareUrl = '';
     
-    // After showing form, set up reply mode if we have letter data
-    if (replyData) {
-      var replySender = replyData.s || '匿名';
-      recipientNameInput.value = replySender;
-      recipientNameInput.readOnly = true;
-      recipientNameInput.style.background = 'hsl(30 30% 96%)';
-      recipientHint.style.display = 'block';
-    } else {
-      // Normal mode: ensure recipient is editable
-      recipientNameInput.readOnly = false;
-      recipientNameInput.style.background = 'hsl(var(--warm-white))';
-      recipientHint.style.display = 'none';
-    }
+    // Use requestAnimationFrame to ensure DOM is updated before setting values
+    requestAnimationFrame(function() {
+      if (replyData) {
+        console.log('Setting up reply mode for sender:', replyData.s);
+        var replySender = replyData.s || '匿名';
+        recipientNameInput.value = replySender;
+        recipientNameInput.readOnly = true;
+        recipientNameInput.setAttribute('readonly', 'readonly');
+        recipientNameInput.style.background = '#f0e6e6';
+        recipientNameInput.style.cursor = 'not-allowed';
+        recipientNameInput.style.opacity = '0.7';
+        recipientHint.style.display = 'block';
+        console.log('Set recipientNameInput.value to:', recipientNameInput.value);
+        
+        // Double-check after a small delay to ensure value sticks
+        setTimeout(function() {
+          if (recipientNameInput.value !== replySender) {
+            console.warn('Value was reset, re-applying...');
+            recipientNameInput.value = replySender;
+          }
+        }, 50);
+      } else {
+        console.log('No replyData, setting normal mode');
+        // Normal mode: ensure recipient is editable
+        recipientNameInput.readOnly = false;
+        recipientNameInput.removeAttribute('readonly');
+        recipientNameInput.style.background = 'hsl(var(--warm-white))';
+        recipientNameInput.style.cursor = '';
+        recipientNameInput.style.opacity = '1';
+        recipientHint.style.display = 'none';
+      }
+    });
     
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // ===== Confetti hearts =====
+  // ===== Confetti hearts (falling from sky with gradient) =====
+  var heartFallTimer = null;
+  
   function triggerConfetti() {
-    var hearts = ['&#10084;', '&#9825;', '&#128150;', '&#128151;', '&#128152;', '&#128153;', '&#128154;', '&#128155;', '&#128156;', '&#128157;', '&#128158;', '&#128159;'];
-    var fragment = document.createDocumentFragment();
-
-    for (var i = 0; i < 35; i++) {
+    // Clear any existing confetti
+    if (heartFallTimer) clearTimeout(heartFallTimer);
+    confettiContainer.innerHTML = '';
+    
+    var hearts = ['&#10084;', '&#9825;', '&#128150;', '&#128151;', '&#128152;'];
+    var startTime = Date.now();
+    var duration = 20000; // 20 seconds total
+    var fadeOutStart = 10000; // Start fading after 10 seconds
+    
+    function createHeart() {
+      var elapsed = Date.now() - startTime;
+      
+      // Stop creating hearts after duration
+      if (elapsed > duration) {
+        // Clean up remaining hearts
+        setTimeout(function() {
+          confettiContainer.innerHTML = '';
+        }, 10000);
+        return;
+      }
+      
       var heart = document.createElement('span');
       heart.className = 'confetti-heart';
       heart.innerHTML = hearts[Math.floor(Math.random() * hearts.length)];
-      heart.style.left = Math.random() * 100 + '%';
-      heart.style.fontSize = (14 + Math.random() * 20) + 'px';
-      heart.style.animationDuration = (7 + Math.random() * 8) + 's';
-      heart.style.animationDelay = Math.random() * 4 + 's';
-      fragment.appendChild(heart);
+      
+      // Position: 0-100% from left
+      var position = Math.random() * 100;
+      heart.style.left = position + '%';
+      
+      // Size and opacity based on position
+      // Left side (0-30%) and right side (70-100%): larger and darker
+      // Center (30-70%): smaller and lighter
+      var size, opacity, colorDepth;
+      if (position < 30 || position > 70) {
+        // Side hearts: larger (18-30px), darker opacity (0.6-0.8)
+        size = 18 + Math.random() * 12;
+        opacity = 0.6 + Math.random() * 0.2;
+      } else {
+        // Center hearts: smaller (10-18px), lighter opacity (0.3-0.5)
+        size = 10 + Math.random() * 8;
+        opacity = 0.3 + Math.random() * 0.2;
+      }
+      
+      heart.style.fontSize = size + 'px';
+      heart.style.opacity = opacity;
+      
+      // Animation duration: longer for sides (10-15s), shorter for center (7-10s)
+      var animDuration = (position < 30 || position > 70) ? 
+        (10 + Math.random() * 5) : 
+        (7 + Math.random() * 3);
+      heart.style.animationDuration = animDuration + 's';
+      heart.style.animationDelay = '0s';
+      
+      confettiContainer.appendChild(heart);
+      
+      // Remove heart after animation completes
+      setTimeout(function() {
+        if (heart.parentNode) {
+          heart.parentNode.removeChild(heart);
+        }
+      }, animDuration * 1000);
     }
-
-    confettiContainer.innerHTML = '';
-    confettiContainer.appendChild(fragment);
-
-    setTimeout(function() {
-      confettiContainer.innerHTML = '';
-    }, 20000);
+    
+    // Create hearts at intervals
+    function scheduleHearts() {
+      var elapsed = Date.now() - startTime;
+      
+      if (elapsed > duration) return;
+      
+      // Calculate how many hearts to create per batch
+      // Start with more, gradually reduce
+      var progress = elapsed / fadeOutStart;
+      var heartsPerBatch;
+      
+      if (elapsed < fadeOutStart) {
+        // First 10 seconds: normal rate (3-5 hearts per batch)
+        heartsPerBatch = 3 + Math.floor(Math.random() * 3);
+      } else {
+        // After 10 seconds: gradually reduce
+        var reductionFactor = 1 - ((elapsed - fadeOutStart) / (duration - fadeOutStart));
+        heartsPerBatch = Math.max(1, Math.floor(3 * reductionFactor));
+      }
+      
+      // Create hearts
+      for (var i = 0; i < heartsPerBatch; i++) {
+        createHeart();
+      }
+      
+      // Schedule next batch (every 300-500ms)
+      heartFallTimer = setTimeout(scheduleHearts, 300 + Math.random() * 200);
+    }
+    
+    // Start the heart falling
+    scheduleHearts();
   }
 
   // ===== Escape HTML =====
