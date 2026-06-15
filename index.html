@@ -1403,11 +1403,24 @@ body {
     }
   };
 
-  // ===== Go back to create form =====
+  // ===== Go back to create form (reply mode) =====
   window.goToCreate = function() {
     if (typewriterTimer) clearTimeout(typewriterTimer);
     window.location.hash = '';
+    
+    // Keep the currentLetterData for reply
+    var replyData = currentLetterData;
+    
     showFormScene();
+    
+    // After showing form, set up reply mode if we have letter data
+    if (replyData) {
+      var replySender = replyData.s || '匿名';
+      recipientNameInput.value = replySender;
+      recipientNameInput.readOnly = true;
+      recipientNameInput.style.background = 'hsl(30 30% 96%)';
+      recipientHint.style.display = 'block';
+    }
   };
 
   // ===== Confetti hearts =====
