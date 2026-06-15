@@ -1296,21 +1296,26 @@ body {
       }
       
       // Decode from base64
-      var compressed = decodeURIComponent(escape(atob(encoded)));
+      var decoded = decodeURIComponent(escape(atob(encoded)));
       
-      // Try to decompress first
+      // Try to decompress first (new format with LZ compression)
       try {
-        var json = LZUtil.decompress(compressed);
+        var json = LZUtil.decompress(decoded);
         var data = JSON.parse(json);
         if (data.r && data.m) {
           return data;
         }
       } catch (decompressError) {
-        // If decompression fails, try direct JSON parse (backward compatibility)
-        var json = compressed;
-        var data = JSON.parse(json);
-        if (data.r && data.m) {
-          return data;
+        // If decompression fails, try direct JSON parse (old format without compression)
+        // The decoded string might already be JSON
+        try {
+          var data = JSON.parse(decoded);
+          if (data.r && data.m) {
+            return data;
+          }
+        } catch (jsonError) {
+          // Both methods failed
+          return null;
         }
       }
       
